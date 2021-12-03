@@ -1,0 +1,102 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  release:
+    types: [ published ]
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Setup PowerShell module cache
+        uses: actions/cache@v2
+        id: cacher
+        with:
+          path: "~/.local/share/powershell/Modules"
+          key: crescendo-0.4.1-cache
+      - name: Install Crescendo
+        if: steps.cacher.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: Install-Module Microsoft.PowerShell.Crescendo -RequiredVersion 0.4.1 -Force
+      - name: Build the module with Crescendo
+        shell: pwsh
+        run: ./build.ps1
+      - name: Bundle up module
+        uses: actions/upload-artifact@v2
+        with:
+          name: module
+          path: ./src/
+  Test:
+    needs: Build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Download module
+        uses: actions/download-artifact@v2
+        with:
+          name: module
+          path: C:\Users\runneradmin\Documents\PowerShell\Modules\Cobalt\
+      - name: Install WinGet
+        shell: pwsh
+        run: .\Install-WinGet.ps1
+      - name: Test with Pester
+        run: |
+          Invoke-Pester -Configuration (New-PesterConfiguration -Hashtable @{
+            Run = @{
+              Exit = $true
+            }
+            TestResult = @{
+              Enabled = $true
+              OutputFormat = 'JUnitXML'
+            }
+          })
+      - name: Upload Pester test results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results
+          path: testResults.xml
+      - name: Upload WinGet logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: WinGet-logs
+          path: C:\Users\runneradmin\AppData\Local\Packages\Microsoft.DesktopAppInstaller*\LocalState\DiagOutputDir\
+  Results:
+    needs: Test
+    if: success() || failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Test Results
+        uses: actions/download-artifact@v2
+        with:
+          name: test-results
+          path: test-results
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: test-results/**/*.xml
+  Publish:
+    needs: Test
+    if: github.event_name == 'release' && github.event.action == 'published'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download module
+        uses: actions/download-artifact@v2
+        with:
+          name: module
+          path: '~/.local/share/powershell/Modules/Cobalt'
+      - name: Publish Module
+        env:
+          NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        shell: pwsh
+        run: Write-Output "Publishing..."; Publish-Module -Name Cobalt -NuGetApiKey $env:NUGET_KEY -Exclude @('Cobalt.ps1')
