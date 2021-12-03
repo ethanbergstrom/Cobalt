@@ -157,8 +157,7 @@ $Commands = @(
                     Handler = {
                         param ($output)
                         if ($output) {
-                            $failures = ($output -match 'failed')
-                            if ($failures) {
+                            if ($output -match 'failed') {
                                 Write-Error ($output -join "`r`n")
                             } else {
                                 $output | ForEach-Object {
@@ -183,34 +182,36 @@ $Commands = @(
                     Handler = {
                         param ( $output )
 
-                        $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
+                        if ($output -ne 'No installed package found matching input criteria.') {
+                            $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
 
-                        $idIndex = $output[$headerLine].IndexOf('Id')
-                        $versionIndex = $output[$headerLine].IndexOf('Version')
-                        $availableIndex = $output[$headerLine].IndexOf('Available')
-                        $sourceIndex = $output[$headerLine].IndexOf('Source')
+                            $idIndex = $output[$headerLine].IndexOf('Id')
+                            $versionIndex = $output[$headerLine].IndexOf('Version')
+                            $availableIndex = $output[$headerLine].IndexOf('Available')
+                            $sourceIndex = $output[$headerLine].IndexOf('Source')
 
-                        # Take into account WinGet's dynamic columnar output formatting
-                        $versionEndIndex = $(
-                            if ($availableIndex -ne -1) {
-                                $availableIndex
-                            } else {
-                                $sourceIndex
+                            # Take into account WinGet's dynamic columnar output formatting
+                            $versionEndIndex = $(
+                                if ($availableIndex -ne -1) {
+                                    $availableIndex
+                                } else {
+                                    $sourceIndex
+                                }
+                            )
+
+                            $output | Select-Object -Skip ($headerLine+2) | ForEach-Object {
+                                $package = @{
+                                    ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
+                                    Version = $_.SubString($versionIndex,$versionEndIndex-$versionIndex).Trim()
+                                }
+
+                                # More dynamic columnar output formatting
+                                if ($sourceIndex -ne -1) {
+                                    $package.Source = $_.SubString($sourceIndex).Trim()
+                                }
+
+                                [pscustomobject]$package
                             }
-                        )
-
-                        $output | Select-Object -Skip ($headerLine+2) | ForEach-Object {
-                            $package = @{
-                                ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
-                                Version = $_.SubString($versionIndex,$versionEndIndex-$versionIndex).Trim()
-                            }
-
-                            # More dynamic columnar output formatting
-                            if ($sourceIndex -ne -1) {
-                                $package.Source = $_.SubString($sourceIndex).Trim()
-                            }
-
-                            [pscustomobject]$package
                         }
                     }
                 }
@@ -224,17 +225,20 @@ $Commands = @(
                     Handler = {
                         param ( $output )
 
-                        $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
+                        if ($output -ne 'No installed package found matching input criteria.') {
 
-                        $idIndex = $output[$headerLine].IndexOf('Id')
-                        $versionIndex = $output[$headerLine].IndexOf('Version')
-                        $sourceIndex = $output[$headerLine].IndexOf('Source')
+                            $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
 
-                        $output | Select-Object -Skip ($headerLine+2) | ForEach-Object {
-                            [pscustomobject]@{
-                                ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
-                                Version = $_.SubString($versionIndex,$sourceIndex-$VersionIndex).Trim()
-                                Source = $_.SubString($sourceIndex).Trim()
+                            $idIndex = $output[$headerLine].IndexOf('Id')
+                            $versionIndex = $output[$headerLine].IndexOf('Version')
+                            $sourceIndex = $output[$headerLine].IndexOf('Source')
+
+                            $output | Select-Object -Skip ($headerLine+2) | ForEach-Object {
+                                [pscustomobject]@{
+                                    ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
+                                    Version = $_.SubString($versionIndex,$sourceIndex-$VersionIndex).Trim()
+                                    Source = $_.SubString($sourceIndex).Trim()
+                                }
                             }
                         }
                     }
