@@ -43,6 +43,9 @@ Unregister-WinGetSource privateRepo
 Cobalt integrates with WinGet.exe to manage and store source information
 
 ## Known Issues
+### Garbled Output with Long Package Names
+WinGet uses a hard-coded output width of 120 characters if it cant determine console width (like when invoked by a Crescendo module), but doesn't correctly truncate the output, which leaves a mess. See https://github.com/microsoft/winget-cli/issues/1300 for more information. Would not recommend using Cobalt as a means of searching for packages with long package names or IDs.
+
 ### Stability
 WinGet's behavior and APIs are still very unstable. Do not be surprised if this module stops working with newer versions of WinGet.
 
