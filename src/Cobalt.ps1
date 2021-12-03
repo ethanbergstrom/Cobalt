@@ -162,9 +162,9 @@ $Commands = @(
                                 Write-Error ($output -join "`r`n")
                             } else {
                                 $output | ForEach-Object {
-                                    if ($_ -match '\[(?<name>[\S]+)\] Version (?<version>[\S]+)' -and $Matches.name -and $Matches.version) {
+                                    if ($_ -match '\[(?<id>[\S]+)\] Version (?<version>[\S]+)' -and $Matches.id -and $Matches.version) {
                                             [pscustomobject]@{
-                                                Name = $Matches.name
+                                                ID = $Matches.id
                                                 Version = $Matches.version
                                             }
                                     }
@@ -183,16 +183,12 @@ $Commands = @(
                     Handler = {
                         param ( $output )
 
-                        $emptyLines = 0
-                        # This is gross, but so is WinGet's lack of easily-parsable output
-                        while( [string]::IsNullOrEmpty(($output[$emptyLines] -replace '-','' -replace '\\','').trim().trim([char]0x0008))) {
-                            $emptyLines++
-                        }
+                        $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
 
-                        $idIndex = $output[$emptyLines].IndexOf('Id')
-                        $versionIndex = $output[$emptyLines].IndexOf('Version')
-                        $availableIndex = $output[$emptyLines].IndexOf('Available')
-                        $sourceIndex = $output[$emptyLines].IndexOf('Source')
+                        $idIndex = $output[$headerLine].IndexOf('Id')
+                        $versionIndex = $output[$headerLine].IndexOf('Version')
+                        $availableIndex = $output[$headerLine].IndexOf('Available')
+                        $sourceIndex = $output[$headerLine].IndexOf('Source')
 
                         # Take into account WinGet's dynamic columnar output formatting
                         $versionEndIndex = $(
@@ -203,9 +199,7 @@ $Commands = @(
                             }
                         )
 
-                        $headerLines = $emptyLines+2
-
-                        $output | Select-Object -Skip $headerLines | ForEach-Object {
+                        $output | Select-Object -Skip ($headerLine+2) | ForEach-Object {
                             $package = @{
                                 ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
                                 Version = $_.SubString($versionIndex,$versionEndIndex-$versionIndex).Trim()
@@ -230,20 +224,13 @@ $Commands = @(
                     Handler = {
                         param ( $output )
 
-                        $emptyLines = 0
-                        # This is gross, but so is WinGet's lack of easily-parsable output
-                        while( [string]::IsNullOrEmpty(($output[$emptyLines] -replace '-','' -replace '\\','').trim().trim([char]0x0008))) {
-                            $emptyLines++
-                        }
+                        $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
 
-                        $idIndex = $output[$emptyLines].IndexOf('Id')
-                        $versionIndex = $output[$emptyLines].IndexOf('Version')
-                        $sourceIndex = $output[$emptyLines].IndexOf('Source')
+                        $idIndex = $output[$headerLine].IndexOf('Id')
+                        $versionIndex = $output[$headerLine].IndexOf('Version')
+                        $sourceIndex = $output[$headerLine].IndexOf('Source')
 
-                        # Skip past the empty space and the header lines in the output
-                        $headerLines = $emptyLines+2
-
-                        $output | Select-Object -Skip $headerLines | ForEach-Object {
+                        $output | Select-Object -Skip ($headerLine+2) | ForEach-Object {
                             [pscustomobject]@{
                                 ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
                                 Version = $_.SubString($versionIndex,$sourceIndex-$VersionIndex).Trim()
