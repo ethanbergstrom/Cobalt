@@ -40,10 +40,10 @@ $msWinGetLatestRelease.links |
             Select-Object -First 1 -ExpandProperty href |
                 ForEach-Object {Invoke-WebRequest -Uri $_ -OutFile $msVCLibDownloadPath}
 
-                Add-AppProvisionedPackage -Online -PackagePath $msWinGetMSIXBundlePath -DependencyPackagePath $msVCLibDownloadPath -LicensePath $msWinGetLicensePath
+# Install the WinGet and it's VC++ .msix with the downloaded license file
+appx\Add-AppProvisionedPackage -Online -PackagePath $msWinGetMSIXBundlePath -DependencyPackagePath $msVCLibDownloadPath -LicensePath $msWinGetLicensePath
 
+# Force the creation of the execution alias with NtObjectManager, since one isn't generated automatically in the current user session
 $appxPackage = Get-AppxPackage Microsoft.DesktopAppInstaller
 $wingetTarget = Join-Path -Path $appxPackage.InstallLocation -ChildPath ((Get-AppxPackageManifest $appxPackage).Package.Applications.Application | Where-Object Id -eq $msWinGetExe | Select-Object -ExpandProperty Executable)
-
-# See https://www.tiraniddo.dev/2019/09/overview-of-windows-execution-aliases.html for more information
-Set-ExecutionAlias -Path $wingetExecAliasPath -PackageName ($appxPackage.PackageFamilyName) -EntryPoint "$($appxPackage.PackageFamilyName)!$msWinGetExe" -Target $wingetTarget -AppType Desktop -Version 3
+NtObjectManager\Set-ExecutionAlias -Path $wingetExecAliasPath -PackageName ($appxPackage.PackageFamilyName) -EntryPoint "$($appxPackage.PackageFamilyName)!$msWinGetExe" -Target $wingetTarget -AppType Desktop -Version 3
