@@ -137,6 +137,44 @@ $Commands = @(
                 ValueFromPipelineByPropertyName = $true
             }
         )
+        OutputHandlers = @{
+            ParameterSetName = 'Default'
+            Handler = {
+                param ( $output )
+
+                $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
+
+                if ($headerLine -ne -1) {
+                    $idIndex = $output[$headerLine].IndexOf('Id')
+                    $versionIndex = $output[$headerLine].IndexOf('Version')
+                    $availableIndex = $output[$headerLine].IndexOf('Available')
+                    $sourceIndex = $output[$headerLine].IndexOf('Source')
+
+                    # Take into account WinGet's dynamic columnar output formatting
+                    $versionEndIndex = $(
+                        if ($availableIndex -ne -1) {
+                            $availableIndex
+                        } else {
+                            $sourceIndex
+                        }
+                    )
+
+                    $output -replace '[^i\p{IsBasicLatin}]',' ' | Select-Object -Skip ($headerLine+2) | ForEach-Object {
+                        $package = [ordered]@{
+                            ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
+                            Version = $_.SubString($versionIndex,$versionEndIndex-$versionIndex).Trim() -replace '[^\.\d]'
+                        }
+
+                        # More dynamic columnar output formatting
+                        if (($sourceIndex -ne -1) -And ($_.Length -ge $sourceIndex)) {
+                            $package.Source = $_.SubString($sourceIndex).Trim()
+                        }
+
+                        [pscustomobject]$package
+                    }
+                }
+            }
+        }
         Verbs = @(
             @{
                 Verb = 'Install'
@@ -177,87 +215,23 @@ $Commands = @(
                 Verb = 'Get'
                 Description = 'Get a list of installed WinGet packages'
                 OriginalCommandElements = @('list','--accept-source-agreements')
-                OutputHandlers = @{
-                    ParameterSetName = 'Default'
-                    Handler = {
-                        param ( $output )
-
-                        $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
-
-                        if ($headerLine -ne -1) {
-                            $idIndex = $output[$headerLine].IndexOf('Id')
-                            $versionIndex = $output[$headerLine].IndexOf('Version')
-                            $availableIndex = $output[$headerLine].IndexOf('Available')
-                            $sourceIndex = $output[$headerLine].IndexOf('Source')
-
-                            # Take into account WinGet's dynamic columnar output formatting
-                            $versionEndIndex = $(
-                                if ($availableIndex -ne -1) {
-                                    $availableIndex
-                                } else {
-                                    $sourceIndex
-                                }
-                            )
-
-                            $output | Select-Object -Skip ($headerLine+2) | ForEach-Object {
-                                $package = [ordered]@{
-                                    ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
-                                    Version = $_.SubString($versionIndex,$versionEndIndex-$versionIndex).Trim()
-                                }
-
-                                # More dynamic columnar output formatting
-                                if ($sourceIndex -ne -1) {
-                                    $package.Source = $_.SubString($sourceIndex).Trim()
-                                }
-
-                                [pscustomobject]$package
-                            }
-                        }
-                    }
-                }
             },
             @{
                 Verb = 'Find'
                 Description = 'Find a list of available WinGet packages'
                 OriginalCommandElements = @('search','--accept-source-agreements')
-                OutputHandlers = @{
-                    ParameterSetName = 'Default'
-                    Handler = {
-                        param ( $output )
-
-                        $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
-
-                        if ($headerLine -ne -1) {
-                            $idIndex = $output[$headerLine].IndexOf('Id')
-                            $versionIndex = $output[$headerLine].IndexOf('Version')
-                            $sourceIndex = $output[$headerLine].IndexOf('Source')
-
-                            $output | Select-Object -Skip ($headerLine+2) | ForEach-Object {
-                                [pscustomobject][ordered]@{
-                                    ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
-                                    Version = $_.SubString($versionIndex,$sourceIndex-$VersionIndex).Trim()
-                                    Source = $_.SubString($sourceIndex).Trim()
-                                }
-                            }
-                        }
-                    }
-                }
             },
             @{
                 Verb = 'Uninstall'
                 Description = 'Uninstall an existing package with WinGet'
                 OriginalCommandElements = @('uninstall','--accept-source-agreements','--silent')
-                Parameters = @(
-                    @{
-                        Name = 'Version'
-                        OriginalName = '--version='
-                        ParameterType = 'string'
-                        Description = 'Package Version'
-                        NoGap = $true
-                        ValueFromPipelineByPropertyName = $true
-                    }
-                )
                 # We don't know what failed WinGet package uninstallation looks like
+                OutputHandlers = @{
+                    ParameterSetName = 'Default'
+                    Handler = {
+                        param ($output)
+                    }
+                }
             }
         )
     }
