@@ -41,7 +41,7 @@ $msWinGetLatestRelease.links |
                 ForEach-Object {Invoke-WebRequest -Uri $_ -OutFile $msVCLibDownloadPath}
 
 # Install the WinGet and it's VC++ .msix with the downloaded license file
-appx\Add-AppProvisionedPackage -Online -PackagePath $msWinGetMSIXBundlePath -DependencyPackagePath $msVCLibDownloadPath -LicensePath $msWinGetLicensePath
+Add-AppProvisionedPackage -Online -PackagePath $msWinGetMSIXBundlePath -DependencyPackagePath $msVCLibDownloadPath -LicensePath $msWinGetLicensePath
 
 # Force the creation of the execution alias with NtObjectManager, since one isn't generated automatically in the current user session
 $appxPackage = Get-AppxPackage Microsoft.DesktopAppInstaller
