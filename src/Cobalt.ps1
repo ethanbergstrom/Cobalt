@@ -167,7 +167,7 @@ $Commands = @(
 
                         # More dynamic columnar output formatting
                         if (($sourceIndex -ne -1) -And ($_.Length -ge $sourceIndex)) {
-                            $package.Source = $_.SubString($sourceIndex).Trim()
+                            $package.Source = $_.SubString($sourceIndex).Trim() -split ' ' | Select-Object -Last 1
                         }
 
                         [pscustomobject]$package
