@@ -182,9 +182,9 @@ $Commands = @(
                     Handler = {
                         param ( $output )
 
-                        if ($output -ne 'No installed package found matching input criteria.') {
-                            $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
+                        $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
 
+                        if ($headerLine -ne -1) {
                             $idIndex = $output[$headerLine].IndexOf('Id')
                             $versionIndex = $output[$headerLine].IndexOf('Version')
                             $availableIndex = $output[$headerLine].IndexOf('Available')
@@ -225,10 +225,9 @@ $Commands = @(
                     Handler = {
                         param ( $output )
 
-                        if ($output -ne 'No installed package found matching input criteria.') {
+                        $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
 
-                            $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
-
+                        if ($headerLine -ne -1) {
                             $idIndex = $output[$headerLine].IndexOf('Id')
                             $versionIndex = $output[$headerLine].IndexOf('Version')
                             $sourceIndex = $output[$headerLine].IndexOf('Source')

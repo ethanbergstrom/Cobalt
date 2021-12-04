@@ -60,7 +60,7 @@ Describe "WinGet error handling" {
 		It 'searches for an ID that will never exist' {
 			{Find-WinGetPackage -ID $package} | Should -Not -Throw
 		}
-		It 'searches for an ID that will never existd' {
+		It 'searches for an ID that will never exist' {
 			{Get-WinGetPackage -ID $package} | Should -Not -Throw
 		}
 	}
