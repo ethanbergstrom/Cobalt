@@ -200,7 +200,7 @@ $Commands = @(
                             )
 
                             $output | Select-Object -Skip ($headerLine+2) | ForEach-Object {
-                                $package = @{
+                                $package = [ordered]@{
                                     ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
                                     Version = $_.SubString($versionIndex,$versionEndIndex-$versionIndex).Trim()
                                 }
@@ -233,7 +233,7 @@ $Commands = @(
                             $sourceIndex = $output[$headerLine].IndexOf('Source')
 
                             $output | Select-Object -Skip ($headerLine+2) | ForEach-Object {
-                                [pscustomobject]@{
+                                [pscustomobject][ordered]@{
                                     ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
                                     Version = $_.SubString($versionIndex,$sourceIndex-$VersionIndex).Trim()
                                     Source = $_.SubString($sourceIndex).Trim()
