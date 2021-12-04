@@ -142,45 +142,48 @@ $Commands = @(
             Handler = {
                 param ( $output )
 
-                $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
+                if ($output -Match '^Name') {
 
-                if ($headerLine -ne -1) {
-                    $idIndex = $output[$headerLine].IndexOf('Id')
-                    $versionIndex = $output[$headerLine].IndexOf('Version')
-                    $availableIndex = $output[$headerLine].IndexOf('Available')
-                    $sourceIndex = $output[$headerLine].IndexOf('Source')
+                    $headerLine = $output.IndexOf(($output -Match '^Name' | Select-Object -First 1))
 
-                    # Stop gathering version data at the 'Available' column if it exists, if not continue on to the 'Source' column (if it exists)
-                    $versionEndIndex = $(
-                        if ($availableIndex -ne -1) {
-                            $availableIndex
-                        } else {
-                            $sourceIndex
-                        }
-                    )
+                    if ($headerLine -ne -1) {
+                        $idIndex = $output[$headerLine].IndexOf('Id')
+                        $versionIndex = $output[$headerLine].IndexOf('Version')
+                        $availableIndex = $output[$headerLine].IndexOf('Available')
+                        $sourceIndex = $output[$headerLine].IndexOf('Source')
 
-                    # The -replace cleans up errant characters that come from WinGet's poor treatment of truncated columnar output
-                    $output -replace '[^i\p{IsBasicLatin}]',' ' | Select-Object -Skip ($headerLine+2) | ForEach-Object {
-                        $package = [ordered]@{
-                            ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
-                        }
-
-                        # I'm so sorry, blame WinGet
-                        # If neither the 'Available' or 'Source' column exist, gather version data to the end of the string
-                        $package.Version = $(
-                            if ($versionEndIndex -ne -1) {
-                                $_.SubString($versionIndex,$versionEndIndex-$versionIndex)
+                        # Stop gathering version data at the 'Available' column if it exists, if not continue on to the 'Source' column (if it exists)
+                        $versionEndIndex = $(
+                            if ($availableIndex -ne -1) {
+                                $availableIndex
                             } else {
-                                $_.SubString($versionIndex)
+                                $sourceIndex
                             }
-                        ).Trim() -replace '[^\.\d]'
+                        )
 
-                        # If the 'Source' column was included in the output, include it in our output, too
-                        if (($sourceIndex -ne -1) -And ($_.Length -ge $sourceIndex)) {
-                            $package.Source = $_.SubString($sourceIndex).Trim() -split ' ' | Select-Object -Last 1
+                        # The -replace cleans up errant characters that come from WinGet's poor treatment of truncated columnar output
+                        $output -replace '[^i\p{IsBasicLatin}]',' ' | Select-Object -Skip ($headerLine+2) | ForEach-Object {
+                            $package = [ordered]@{
+                                ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
+                            }
+
+                            # I'm so sorry, blame WinGet
+                            # If neither the 'Available' or 'Source' column exist, gather version data to the end of the string
+                            $package.Version = $(
+                                if ($versionEndIndex -ne -1) {
+                                    $_.SubString($versionIndex,$versionEndIndex-$versionIndex)
+                                } else {
+                                    $_.SubString($versionIndex)
+                                }
+                            ).Trim() -replace '[^\.\d]'
+
+                            # If the 'Source' column was included in the output, include it in our output, too
+                            if (($sourceIndex -ne -1) -And ($_.Length -ge $sourceIndex)) {
+                                $package.Source = $_.SubString($sourceIndex).Trim() -split ' ' | Select-Object -Last 1
+                            }
+
+                            [pscustomobject]$package
                         }
-
-                        [pscustomobject]$package
                     }
                 }
             }
