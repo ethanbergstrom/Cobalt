@@ -147,7 +147,13 @@ $Commands = @(
                 $localeData = $(
                     if ($locale -eq 'en-US') {
                         # English locale files aren't stored separately on GitHub, so we'll hard-code them here
-                        ('SearchName','Name'), ('SearchID','ID'), ('SearchVersion','Version'), ('AvailableHeader','Available'), ('SearchSource','Source') | ForEach-Object {[pscustomobject]@{name = $_[0]; value = $_[1]}}
+                        (
+                            ('SearchName','Name'),
+                            ('SearchID','Id'),
+                            ('SearchVersion','Version'),
+                            ('AvailableHeader','Available'),
+                            ('SearchSource','Source')
+                        ) | ForEach-Object {[pscustomobject]@{name = $_[0]; value = $_[1]}}
                     } else {
                         # Pull the locale file directly from GitHub
                         # We have to trim the leading BOM for .NET's XML parser to correctly read Microsoft's own files - go figure
