@@ -144,22 +144,19 @@ $Commands = @(
 
                 $locale = (Get-WinSystemLocale).Name
 
-                $localeData = $(
-                    if ($locale -eq 'en-US') {
-                        # English locale files aren't stored separately on GitHub, so we'll hard-code them here
-                        (
-                            ('SearchName','Name'),
-                            ('SearchID','Id'),
-                            ('SearchVersion','Version'),
-                            ('AvailableHeader','Available'),
-                            ('SearchSource','Source')
-                        ) | ForEach-Object {[pscustomobject]@{name = $_[0]; value = $_[1]}}
-                    } else {
-                        # Pull the locale file directly from GitHub
-                        # We have to trim the leading BOM for .NET's XML parser to correctly read Microsoft's own files - go figure
-                        ([xml](((Invoke-WebRequest -Uri "https://raw.githubusercontent.com/microsoft/winget-cli/master/Localization/Resources/$locale/winget.resw" -ErrorAction Stop ).Content -replace "\uFEFF", ""))).root.data
-                    }
-                )
+                $localeData = try {
+                    # We have to trim the leading BOM for .NET's XML parser to correctly read Microsoft's own files - go figure
+                    ([xml](((Invoke-WebRequest -Uri "https://raw.githubusercontent.com/microsoft/winget-cli/master/Localization/Resources/$locale/winget.resw" -ErrorAction Stop ).Content -replace "\uFEFF", ""))).root.data
+                } catch {
+                    # Fall back to English if a locale file doesn't exist
+                    (
+                        ('SearchName','Name'),
+                        ('SearchID','Id'),
+                        ('SearchVersion','Version'),
+                        ('AvailableHeader','Available'),
+                        ('SearchSource','Source')
+                    ) | ForEach-Object {[pscustomobject]@{name = $_[0]; value = $_[1]}}
+                }
 
                 $nameHeader = $output -Match "^$($localeData | Where-Object name -eq SearchName | Select-Object -ExpandProperty value)"
 
