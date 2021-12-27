@@ -45,7 +45,7 @@ jobs:
         env:
           LANGUAGE: ${{ matrix.language }}
         run:
-          Set-WinUILanguageOverride $env:LANGUAGE
+          Set-WinUILanguageOverride -Language $env:LANGUAGE
           (Get-UICulture).Name -eq $env:LANGUAGE
       - name: Check language
         run: Get-Culture
