@@ -45,7 +45,7 @@ jobs:
         env:
           LANGUAGE: ${{ matrix.language }}
         run:
-          Set-WinUILanguageOverride -Language $env:LANGUAGE
+          Set-WinUILanguageOverride -Language $env:LANGUAGE;
           (Get-UICulture).Name -eq $env:LANGUAGE
       - name: Check language
         run: Get-Culture
@@ -62,7 +62,7 @@ jobs:
       - name: Test with Pester
         run: |
           # Required for Crescendo-generated modules to interpret 
-          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8;
           Invoke-Pester -Configuration (New-PesterConfiguration -Hashtable @{
             Run = @{
               Exit = $true
