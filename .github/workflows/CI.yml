@@ -37,8 +37,9 @@ jobs:
   Test:
     needs: Build
     runs-on: windows-latest
-    strategy: matrix
-      language: [en-US, de-DE, es-ES, fr-FR, it-IT, ja-JP, ko-KR, pt-BR, ru-RU, zh-CN, zh-TW]
+    strategy: 
+      matrix:
+        language: [en-US, de-DE, es-ES, fr-FR, it-IT, ja-JP, ko-KR, pt-BR, ru-RU, zh-CN, zh-TW]
     steps:
       - name: Set up language
         env:
