@@ -37,18 +37,7 @@ jobs:
   Test:
     needs: Build
     runs-on: windows-latest
-    strategy: 
-      matrix:
-        language: [en-US, de-DE, es-ES, fr-FR, it-IT, ja-JP, ko-KR, pt-BR, ru-RU, zh-CN, zh-TW]
     steps:
-      - name: Set up language
-        env:
-          LANGUAGE: ${{ matrix.language }}
-        run:
-          Set-WinUILanguageOverride -Language $env:LANGUAGE;
-          (Get-UICulture).Name -eq $env:LANGUAGE
-      - name: Check language
-        run: Get-Culture
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Download module
