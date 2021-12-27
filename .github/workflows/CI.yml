@@ -44,7 +44,11 @@ jobs:
       - name: Set up language
         env:
           LANGUAGE: ${{ matrix.language }}
-        run: Set-Culture $env:LANGUAGE
+        run:
+          Set-WinUILanguageOverride $env:LANGUAGE
+          (Get-UICulture).Name -eq $env:LANGUAGE
+      - name: Check language
+        run: Get-Culture
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Download module
