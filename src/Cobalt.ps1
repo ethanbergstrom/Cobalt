@@ -142,11 +142,11 @@ $Commands = @(
             Handler = {
                 param ( $output )
 
-                $locale = (Get-WinSystemLocale).Name
+                $language = (Get-UICulture).Name
 
-                $localeData = try {
+                $languageData = try {
                     # We have to trim the leading BOM for .NET's XML parser to correctly read Microsoft's own files - go figure
-                    ([xml](((Invoke-WebRequest -Uri "https://raw.githubusercontent.com/microsoft/winget-cli/master/Localization/Resources/$locale/winget.resw" -ErrorAction Stop ).Content -replace "\uFEFF", ""))).root.data
+                    ([xml](((Invoke-WebRequest -Uri "https://raw.githubusercontent.com/microsoft/winget-cli/master/Localization/Resources/$language/winget.resw" -ErrorAction Stop ).Content -replace "\uFEFF", ""))).root.data
                 } catch {
                     # Fall back to English if a locale file doesn't exist
                     (
@@ -158,17 +158,17 @@ $Commands = @(
                     ) | ForEach-Object {[pscustomobject]@{name = $_[0]; value = $_[1]}}
                 }
 
-                $nameHeader = $output -Match "^$($localeData | Where-Object name -eq SearchName | Select-Object -ExpandProperty value)"
+                $nameHeader = $output -Match "^$($languageData | Where-Object name -eq SearchName | Select-Object -ExpandProperty value)"
 
                 if ($nameHeader) {
 
                     $headerLine = $output.IndexOf(($nameHeader | Select-Object -First 1))
 
                     if ($headerLine -ne -1) {
-                        $idIndex = $output[$headerLine].IndexOf(($localeData | Where-Object name -eq SearchID | Select-Object -ExpandProperty value))
-                        $versionIndex = $output[$headerLine].IndexOf(($localeData | Where-Object name -eq SearchVersion | Select-Object -ExpandProperty value))
-                        $availableIndex = $output[$headerLine].IndexOf(($localeData | Where-Object name -eq AvailableHeader | Select-Object -ExpandProperty value))
-                        $sourceIndex = $output[$headerLine].IndexOf(($localeData | Where-Object name -eq SearchSource | Select-Object -ExpandProperty value))
+                        $idIndex = $output[$headerLine].IndexOf(($languageData | Where-Object name -eq SearchID | Select-Object -ExpandProperty value))
+                        $versionIndex = $output[$headerLine].IndexOf(($languageData | Where-Object name -eq SearchVersion | Select-Object -ExpandProperty value))
+                        $availableIndex = $output[$headerLine].IndexOf(($languageData | Where-Object name -eq AvailableHeader | Select-Object -ExpandProperty value))
+                        $sourceIndex = $output[$headerLine].IndexOf(($languageData | Where-Object name -eq SearchSource | Select-Object -ExpandProperty value))
 
                         # Stop gathering version data at the 'Available' column if it exists, if not continue on to the 'Source' column (if it exists)
                         $versionEndIndex = $(

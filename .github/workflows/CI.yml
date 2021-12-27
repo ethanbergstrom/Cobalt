@@ -37,7 +37,13 @@ jobs:
   Test:
     needs: Build
     runs-on: windows-latest
+    strategy: matrix
+      language: [en-US, de-DE, es-ES, fr-FR, it-IT, ja-JP, ko-KR, pt-BR, ru-RU, zh-CN, zh-TW]
     steps:
+      - name: Set up language
+        env:
+          LANGUAGE: ${{ matrix.language }}
+        run: Set-Culture $env:LANGUAGE
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Download module
@@ -50,6 +56,8 @@ jobs:
         run: .\Install-WinGet.ps1
       - name: Test with Pester
         run: |
+          # Required for Crescendo-generated modules to interpret 
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
           Invoke-Pester -Configuration (New-PesterConfiguration -Hashtable @{
             Run = @{
               Exit = $true
