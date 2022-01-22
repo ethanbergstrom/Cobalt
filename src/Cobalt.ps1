@@ -227,7 +227,8 @@ $Commands = @(
                         param ($output)
                         if ($output) {
                             if ($output -match 'failed') {
-                                Write-Error ($output -join "`r`n")
+                                # Only show output that matches or comes after the 'failed' keyword
+                                Write-Error ($output[$output.IndexOf($($output -match 'failed' | Select-Object -First 1))..($output.Length-1)] -join "`r`n")
                             } else {
                                 $output | ForEach-Object {
                                     if ($_ -match '\[(?<id>[\S]+)\] Version (?<version>[\S]+)' -and $Matches.id -and $Matches.version) {
