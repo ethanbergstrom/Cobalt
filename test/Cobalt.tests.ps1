@@ -62,8 +62,11 @@ Describe "package upgrade" {
 			Uninstall-WinGetPackage -ID $package
 		}
 
-		It 'upgrade a specific package to the latest version' {
+		It 'upgrades a specific package to the latest version' {
 			Update-WinGetPackage -ID $package -Exact | Where-Object {$_.ID -eq $package} | Where-Object {[version]$_.version -gt [version]$version} | Should -Not -BeNullOrEmpty
+		}
+		It 'upgrades again, and returns no output, because everything is up to date' {
+			Update-WinGetPackage -ID $package -Exact | Where-Object {$_.ID -eq $package} | Where-Object {[version]$_.version -gt [version]$version} | Should -BeNullOrEmpty
 		}
 	}
 	Context 'multiple packages' {
@@ -85,7 +88,7 @@ Describe "package upgrade" {
 		}
 
 		It 'upgrades all packages without erroring' {
-			{Update-WinGetPackage -All} | Should -Not -Throw
+			Update-WinGetPackage -All | Should -Not -BeNullOrEmpty
 		}
 
 		It 'successfully upgraded CPU-Z a newer version' {
@@ -100,6 +103,10 @@ Describe "package upgrade" {
 				$package = $_
 				Get-WinGetPackage -ID $package.id | Where-Object {[version]$_.version -gt [version]$package.version}
 			} | Should -Not -BeNullOrEmpty
+		}
+
+		It 'upgrades all packages again, and returns no output, because everything is up to date' {
+			Update-WinGetPackage -All | Should -BeNullOrEmpty
 		}
 	}
 }
