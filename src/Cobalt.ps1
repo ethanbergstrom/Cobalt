@@ -10,6 +10,27 @@ $BaseOutputHandlers = @{
         param ( $output )
     }
 }
+
+$InstallPackageOutputHandler = {
+        param ($output)
+        if ($output) {
+            if ($output -match 'failed') {
+                # Only show output that matches or comes after the 'failed' keyword
+                Write-Error ($output[$output.IndexOf($($output -match 'failed' | Select-Object -First 1))..($output.Length-1)] -join "`r`n")
+            } else {
+                $output | ForEach-Object {
+                    if ($_ -match '\[(?<id>[\S]+)\] Version (?<version>[\S]+)' -and $Matches.id -and $Matches.version) {
+                            [pscustomobject]@{
+                                ID = $Matches.id
+                                Version = $Matches.version
+                            }
+                    }
+                }
+            }
+        }
+    }
+}
+
 # The general structure of this hashtable is to define noun-level attributes, which are -probably- common across all commands for the same noun, but still allow for customization at more specific verb-level defition for that noun.
 # The following three command attributes have the following order of precedence:
 # 	OriginalCommandElements will be MERGED in the order of Noun + Verb + Base
@@ -223,24 +244,7 @@ $Commands = @(
                 )
                 OutputHandlers = @{
                     ParameterSetName = 'Default'
-                    Handler = {
-                        param ($output)
-                        if ($output) {
-                            if ($output -match 'failed') {
-                                # Only show output that matches or comes after the 'failed' keyword
-                                Write-Error ($output[$output.IndexOf($($output -match 'failed' | Select-Object -First 1))..($output.Length-1)] -join "`r`n")
-                            } else {
-                                $output | ForEach-Object {
-                                    if ($_ -match '\[(?<id>[\S]+)\] Version (?<version>[\S]+)' -and $Matches.id -and $Matches.version) {
-                                            [pscustomobject]@{
-                                                ID = $Matches.id
-                                                Version = $Matches.version
-                                            }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Handler = $InstallPackageOutputHandler
                 }
             },
             @{
@@ -252,6 +256,23 @@ $Commands = @(
                 Verb = 'Find'
                 Description = 'Find a list of available WinGet packages'
                 OriginalCommandElements = @('search','--accept-source-agreements')
+            },
+            @{
+                Verb = 'Update'
+                Description = 'Updates an installed package to the latest version'
+                OriginalCommandElements = @('upgrade')
+                Parameters = @(
+                    @{
+                        Name = 'All'
+                        OriginalName = '--all'
+                        ParameterType = 'switch'
+                        Description = 'Upgrade all packages'
+                    }
+                )
+                OutputHandlers = @{
+                    ParameterSetName = 'Default'
+                    Handler = $InstallPackageOutputHandler
+                }
             },
             @{
                 Verb = 'Uninstall'

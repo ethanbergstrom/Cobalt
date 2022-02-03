@@ -51,6 +51,56 @@ Describe "pipline-based package installation and uninstallation" {
 	}
 }
 
+Describe "package upgrade" {
+	Context 'a single package' {
+		BeforeAll {
+			$package = 'CPUID.CPU-Z'
+			$version = '1.95'
+			Install-WinGetPackage -ID $package -Version $version -Exact
+		}
+		AfterAll {
+			Uninstall-WinGetPackage -ID $package
+		}
+
+		It 'upgrade a specific package to the latest version' {
+			Update-WinGetPackage -ID $package -Exact | Where-Object {$_.ID -eq $package} | Where-Object {[version]$_.version -gt [version]$version} | Should -Not -BeNullOrEmpty
+		}
+	}
+	Context 'multiple packages' {
+		BeforeAll {
+			$packages = @(
+				@{
+					id = 'CPUID.CPU-Z'
+					version = '1.95'
+				},
+				@{
+					id = 'vim.vim'
+					version = '8.2.3821'
+				}
+			)
+			$packages | ForEach-Object {Install-WinGetPackage -ID $_.id -Version $_.version -Exact}
+		}
+
+		It 'upgrades all packages without erroring' {
+			{Update-WinGetPackage -All} Should -Not -Throw | Where-Object {$_.ID -eq $package} | Should -Not -BeNullOrEmpty
+		}
+
+		It 'successfully upgraded CPU-Z a newer version' {
+			$packages | Where-Object id -eq 'CPUID.CPU-Z' | ForEach-Object {
+				$package = $_
+				Get-WinGetPackage -ID $package.id | Where-Object {[version]$_.version -gt [version]$package.version}
+			} | Should -Not -BeNullOrEmpty
+		}
+
+		It 'successfully upgraded vim a newer version' {
+			$packages | Where-Object id -eq 'vim.vim' | ForEach-Object {
+				$package = $_
+				Get-WinGetPackage -ID $package.id | Where-Object {[version]$_.version -gt [version]$package.version}
+			} | Should -Not -BeNullOrEmpty
+		}
+	}
+}
+
 Describe "WinGet error handling" {
 	Context 'no results returned' {
 		BeforeAll {
