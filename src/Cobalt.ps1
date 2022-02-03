@@ -19,7 +19,7 @@ $InstallPackageOutputHandler = {
             Write-Error ($output[$output.IndexOf($($output -match 'failed' | Select-Object -First 1))..($output.Length-1)] -join "`r`n")
         } else {
             $output | ForEach-Object {
-                if ($_ -match 'Found  \[(?<id>[\S]+)\] Version (?<version>[\S]+)' -and $Matches.id -and $Matches.version) {
+                if ($_ -match 'Found .+ \[(?<id>[\S]+)\] Version (?<version>[\S]+)' -and $Matches.id -and $Matches.version) {
                         [pscustomobject]@{
                             ID = $Matches.id
                             Version = $Matches.version

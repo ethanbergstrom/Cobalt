@@ -77,8 +77,8 @@ Describe "package upgrade" {
 					version = '1.95'
 				},
 				@{
-					id = 'vim.vim'
-					version = '8.2.3821'
+					id = 'putty.putty'
+					version = '0.74'
 				}
 			)
 			$packages | ForEach-Object {Install-WinGetPackage -ID $_.id -Version $_.version -Exact}
