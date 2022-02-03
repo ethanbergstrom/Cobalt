@@ -82,7 +82,7 @@ Describe "package upgrade" {
 		}
 
 		It 'upgrades all packages without erroring' {
-			{Update-WinGetPackage -All} Should -Not -Throw | Where-Object {$_.ID -eq $package} | Should -Not -BeNullOrEmpty
+			{Update-WinGetPackage -All} Should -Not -Throw 
 		}
 
 		It 'successfully upgraded CPU-Z a newer version' {
