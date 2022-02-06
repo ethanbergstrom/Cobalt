@@ -91,18 +91,11 @@ Describe "package upgrade" {
 			Update-WinGetPackage -All | Should -Not -BeNullOrEmpty
 		}
 
-		It 'successfully upgraded CPU-Z a newer version' {
-			$packages | Where-Object id -eq 'CPUID.CPU-Z' | ForEach-Object {
+		It 'successfully upgraded packages to a newer version' {
+			$packages | ForEach-Object {
 				$package = $_
-				Get-WinGetPackage -ID $package.id | Where-Object {[version]$_.version -gt [version]$package.version}
-			} | Should -Not -BeNullOrEmpty
-		}
-
-		It 'successfully upgraded vim a newer version' {
-			$packages | Where-Object id -eq 'vim.vim' | ForEach-Object {
-				$package = $_
-				Get-WinGetPackage -ID $package.id | Where-Object {[version]$_.version -gt [version]$package.version}
-			} | Should -Not -BeNullOrEmpty
+				Get-WinGetPackage -ID $package.id | Where-Object {[version]$_.version -gt [version]$package.version} | Should -Not -BeNullOrEmpty
+			}
 		}
 
 		It 'upgrades all packages again, and returns no output, because everything is up to date' {
