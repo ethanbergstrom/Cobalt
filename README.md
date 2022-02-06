@@ -23,7 +23,31 @@ Find-WinGetPackage -ID Mozilla.Firefox -Exact
 ```PowerShell
 Find-WinGetPackage OpenJS.NodeJS -Exact | Install-WinGetPackage
 
-Install-WinGetPackage 7zip.7zip -Exact
+Install-WinGetPackage 7zip.7zip
+```
+
+### Install a list of packages
+```PowerShell
+@('CPUID.CPU-Z','7zip.7zip') | ForEach-Object { Install-WinGetPackage $_ }
+```
+
+### Install a specific version of a package
+```PowerShell
+Install-WinGetPackage CPUID.CPU-Z -Version 1.95
+```
+
+### Install multiple packages with specific versions
+```PowerShell
+@(
+    @{
+        id = 'CPUID.CPU-Z'
+        version = '1.95'
+    },
+    @{
+        id = 'putty.putty'
+        version = '0.74'
+    }
+) | Install-WinGetPackage
 ```
 
 ### Get list of installed packages
@@ -31,9 +55,27 @@ Install-WinGetPackage 7zip.7zip -Exact
 Get-WinGetPackage nodejs
 ```
 
+### Upgrade a package
+```PowerShell
+Update-WinGetPackage CPUID.CPU-Z
+```
+
+### Upgrade a list of packages
+```PowerShell
+@('CPUID.CPU-Z','7zip.7zip') | ForEach-Object { Update-WinGetPackage -ID $_ }
+```
+
+### Upgrade all packages
+> :warning: **Use at your own risk!** WinGet will try to upgrade all layered software it finds, may not always succeed, and may upgrade software you don't want upgraded.
+```PowerShell
+Update-WinGetPackage -All
+```
+
 ### Uninstall a package
 ```PowerShell
 Get-WinGetPackage nodejs | Uninstall-WinGetPackage
+
+Uninstall-WinGetPackage 7zip.7zip
 ```
 
 ### Manage package sources
