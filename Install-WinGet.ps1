@@ -1,5 +1,5 @@
 Install-Module NtObjectManager -Force
-Import-Module appx -UseWindowsPowerShell
+Import-Module appx -UseWindowsPowerShell -WarningAction SilentlyContinue
 
 # GitHub release information
 $appxPackageName = 'Microsoft.DesktopAppInstaller'
