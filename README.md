@@ -57,7 +57,7 @@ Get-WinGetPackage nodejs
 
 ### Upgrade a package
 ```PowerShell
-Update-WinGetPackage nodejs
+Update-WinGetPackage CPUID.CPU-Z
 ```
 
 ### Upgrade a list of packages
