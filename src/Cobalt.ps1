@@ -11,12 +11,93 @@ $BaseOutputHandlers = @{
     }
 }
 
+$outputHanderHeader = {param ($output)}
+
+$i18nHandlerHelper = {
+    $language = (Get-UICulture).Name
+
+    $languageData = $(
+        $hash = @{}
+
+        $(try {
+            # We have to trim the leading BOM for .NET's XML parser to correctly read Microsoft's own files - go figure
+            ([xml](((Invoke-WebRequest -Uri "https://raw.githubusercontent.com/microsoft/winget-cli/master/Localization/Resources/$language/winget.resw" -ErrorAction Stop ).Content -replace "\uFEFF", ""))).root.data
+        } catch {
+            # Fall back to English if a locale file doesn't exist
+            (
+                ('SearchName','Name'),
+                ('SearchID','Id'),
+                ('SearchVersion','Version'),
+                ('AvailableHeader','Available'),
+                ('SearchSource','Source'),
+                ('ShowVersion','Version'),
+                ('GetManifestResultVersionNotFound','No version found matching:'),
+                ('InstallerFailedWithCode','Installer failed with exit code:'),
+                ('UninstallFailedWithCode','Uninstall failed with exit code:')
+            ) | ForEach-Object {[pscustomobject]@{name = $_[0]; value = $_[1]}}
+        }) | ForEach-Object {
+            # Convert the array into a hashtable
+            $hash[$_.name] = $_.value
+        }
+
+        $hash
+    )
+}
+
+$GetPackageOutputHandler = {
+    $nameHeader = $output -Match "^$($languageData.SearchName)"
+
+    if ($nameHeader) {
+
+        $headerLine = $output.IndexOf(($nameHeader | Select-Object -First 1))
+
+        if ($headerLine -ne -1) {
+            $idIndex = $output[$headerLine].IndexOf(($languageData.SearchID))
+            $versionIndex = $output[$headerLine].IndexOf(($languageData.SearchVersion))
+            $availableIndex = $output[$headerLine].IndexOf(($languageData.AvailableHeader))
+            $sourceIndex = $output[$headerLine].IndexOf(($languageData.SearchSource))
+
+            # Stop gathering version data at the 'Available' column if it exists, if not continue on to the 'Source' column (if it exists)
+            $versionEndIndex = $(
+                if ($availableIndex -ne -1) {
+                    $availableIndex
+                } else {
+                    $sourceIndex
+                }
+            )
+
+            # The -replace cleans up errant characters that come from WinGet's poor treatment of truncated columnar output
+            $output -replace '[^i\p{IsBasicLatin}]',' ' | Select-Object -Skip ($headerLine+2) | ForEach-Object {
+                $package = [ordered]@{
+                    ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
+                }
+
+                # I'm so sorry, blame WinGet
+                # If neither the 'Available' or 'Source' column exist, gather version data to the end of the string
+                $package.Version = $(
+                    if ($versionEndIndex -ne -1) {
+                        $_.SubString($versionIndex,$versionEndIndex-$versionIndex)
+                    } else {
+                        $_.SubString($versionIndex)
+                    }
+                ).Trim() -replace '[^\.\d]'
+
+                # If the 'Source' column was included in the output, include it in our output, too
+                if (($sourceIndex -ne -1) -And ($_.Length -ge $sourceIndex)) {
+                    $package.Source = $_.SubString($sourceIndex).Trim() -split ' ' | Select-Object -Last 1
+                }
+
+                [pscustomobject]$package
+            }
+        }
+    }
+}
+
 $InstallPackageOutputHandler = {
-    param ($output)
     if ($output) {
-        if ($output -match 'failed') {
+        if ($output -match $languageData.InstallerFailedWithCode) {
             # Only show output that matches or comes after the 'failed' keyword
-            Write-Error ($output[$output.IndexOf($($output -match 'failed' | Select-Object -First 1))..($output.Length-1)] -join "`r`n")
+            Write-Error ($output[$output.IndexOf($($output -match $languageData.InstallerFailedWithCode | Select-Object -First 1))..($output.Length-1)] -join "`r`n")
         } else {
             $output | ForEach-Object {
                 if ($_ -match 'Found .+ \[(?<id>[\S]+)\] Version (?<version>[\S]+)' -and $Matches.id -and $Matches.version) {
@@ -29,6 +110,42 @@ $InstallPackageOutputHandler = {
         }
     }
 }
+
+$UnInstallPackageOutputHandler = {
+    if ($output) {
+        if ($output -match $languageData.InstallerFailedWithCode) {
+            # Only show output that matches or comes after the 'failed' keyword
+            Write-Error ($output[$output.IndexOf($($output -match $languageData.InstallerFailedWithCode | Select-Object -First 1))..($output.Length-1)] -join "`r`n")
+        } else {
+            $output
+        }
+    }
+}
+
+$PackageInfoVersionOutputHandler = {
+    if ($output) {
+        if ($output | Select-String -Pattern $languageData.GetManifestResultVersionNotFound) {
+            # Only show output that matches or comes after the 'failed' keyword
+            Write-Error ($output[$output.IndexOf($($output | Select-String -Pattern $languageData.GetManifestResultVersionNotFound | Select-Object -First 1))..($output.Length-1)] -join "`r`n")
+        } else {
+            $versionHeader = $output -Match "^$($languageData.ShowVersion)"
+
+            if ($versionHeader) {
+
+                $headerLine = $output.IndexOf(($versionHeader | Select-Object -First 1))
+
+                if ($headerLine -ne -1) {
+                    $output | Select-Object -Skip ($headerLine+2)
+                }
+            }
+        }
+    }
+}
+
+$RenderedGetPackageOutputHandler = [scriptblock]::Create($outputHanderHeader.ToString() + $i18nHandlerHelper.ToString() + $GetPackageOutputHandler.ToString())
+$RenderedInstallPackageOutputHandler = [scriptblock]::Create($outputHanderHeader.ToString() + $i18nHandlerHelper.ToString() + $InstallPackageOutputHandler.ToString())
+$RenderedUnInstallPackageOutputHandler = [scriptblock]::Create($outputHanderHeader.ToString() + $i18nHandlerHelper.ToString() + $UnInstallPackageOutputHandler.ToString())
+$RenderedPackageInfoVersionOutputHandler = [scriptblock]::Create($outputHanderHeader.ToString() + $i18nHandlerHelper.ToString() + $PackageInfoVersionOutputHandler.ToString())
 
 # The general structure of this hashtable is to define noun-level attributes, which are -probably- common across all commands for the same noun, but still allow for customization at more specific verb-level defition for that noun.
 # The following three command attributes have the following order of precedence:
@@ -159,72 +276,7 @@ $Commands = @(
         )
         OutputHandlers = @{
             ParameterSetName = 'Default'
-            Handler = {
-                param ( $output )
-
-                $language = (Get-UICulture).Name
-
-                $languageData = try {
-                    # We have to trim the leading BOM for .NET's XML parser to correctly read Microsoft's own files - go figure
-                    ([xml](((Invoke-WebRequest -Uri "https://raw.githubusercontent.com/microsoft/winget-cli/master/Localization/Resources/$language/winget.resw" -ErrorAction Stop ).Content -replace "\uFEFF", ""))).root.data
-                } catch {
-                    # Fall back to English if a locale file doesn't exist
-                    (
-                        ('SearchName','Name'),
-                        ('SearchID','Id'),
-                        ('SearchVersion','Version'),
-                        ('AvailableHeader','Available'),
-                        ('SearchSource','Source')
-                    ) | ForEach-Object {[pscustomobject]@{name = $_[0]; value = $_[1]}}
-                }
-
-                $nameHeader = $output -Match "^$($languageData | Where-Object name -eq SearchName | Select-Object -ExpandProperty value)"
-
-                if ($nameHeader) {
-
-                    $headerLine = $output.IndexOf(($nameHeader | Select-Object -First 1))
-
-                    if ($headerLine -ne -1) {
-                        $idIndex = $output[$headerLine].IndexOf(($languageData | Where-Object name -eq SearchID | Select-Object -ExpandProperty value))
-                        $versionIndex = $output[$headerLine].IndexOf(($languageData | Where-Object name -eq SearchVersion | Select-Object -ExpandProperty value))
-                        $availableIndex = $output[$headerLine].IndexOf(($languageData | Where-Object name -eq AvailableHeader | Select-Object -ExpandProperty value))
-                        $sourceIndex = $output[$headerLine].IndexOf(($languageData | Where-Object name -eq SearchSource | Select-Object -ExpandProperty value))
-
-                        # Stop gathering version data at the 'Available' column if it exists, if not continue on to the 'Source' column (if it exists)
-                        $versionEndIndex = $(
-                            if ($availableIndex -ne -1) {
-                                $availableIndex
-                            } else {
-                                $sourceIndex
-                            }
-                        )
-
-                        # The -replace cleans up errant characters that come from WinGet's poor treatment of truncated columnar output
-                        $output -replace '[^i\p{IsBasicLatin}]',' ' | Select-Object -Skip ($headerLine+2) | ForEach-Object {
-                            $package = [ordered]@{
-                                ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
-                            }
-
-                            # I'm so sorry, blame WinGet
-                            # If neither the 'Available' or 'Source' column exist, gather version data to the end of the string
-                            $package.Version = $(
-                                if ($versionEndIndex -ne -1) {
-                                    $_.SubString($versionIndex,$versionEndIndex-$versionIndex)
-                                } else {
-                                    $_.SubString($versionIndex)
-                                }
-                            ).Trim() -replace '[^\.\d]'
-
-                            # If the 'Source' column was included in the output, include it in our output, too
-                            if (($sourceIndex -ne -1) -And ($_.Length -ge $sourceIndex)) {
-                                $package.Source = $_.SubString($sourceIndex).Trim() -split ' ' | Select-Object -Last 1
-                            }
-
-                            [pscustomobject]$package
-                        }
-                    }
-                }
-            }
+            Handler = $RenderedGetPackageOutputHandler
         }
         Verbs = @(
             @{
@@ -243,7 +295,7 @@ $Commands = @(
                 )
                 OutputHandlers = @{
                     ParameterSetName = 'Default'
-                    Handler = $InstallPackageOutputHandler
+                    Handler = $RenderedInstallPackageOutputHandler
                 }
             },
             @{
@@ -277,13 +329,87 @@ $Commands = @(
                 Verb = 'Uninstall'
                 Description = 'Uninstall an existing package with WinGet'
                 OriginalCommandElements = @('uninstall','--accept-source-agreements','--silent')
-                # We don't know what failed WinGet package uninstallation looks like
                 OutputHandlers = @{
                     ParameterSetName = 'Default'
-                    Handler = {
-                        param ($output)
-                    }
+                    Handler = $RenderedUnInstallPackageOutputHandler
                 }
+            }
+        )
+    },
+    @{
+        Noun = 'WinGetPackageInfo'
+        Verbs = @(
+            @{
+                Verb = 'Get'
+                Description = 'Shows information on a specific WinGet package'
+                OriginalCommandElements = @('show','--accept-source-agreements')
+                DefaultParameterSetName = 'Default'
+                Parameters = @(
+                    @{
+                        Name = 'ID'
+                        OriginalName = '--id='
+                        ParameterType = 'string'
+                        Description = 'Package ID'
+                        NoGap = $true
+                        Mandatory = $true
+                        ValueFromPipelineByPropertyName = $true
+                        Position = 0
+                        ParameterSetName = @('Default','Versions')
+                    },
+                    @{
+                        Name = 'Exact'
+                        OriginalName = '--exact'
+                        ParameterType = 'switch'
+                        Description = 'Search by exact package name'
+                        ParameterSetName = @('Default','Versions')
+                    },
+                    @{
+                        Name = 'Version'
+                        OriginalName = '--version='
+                        ParameterType = 'string'
+                        Description = 'Package Version'
+                        NoGap = $true
+                        ValueFromPipelineByPropertyName = $true
+                        ParameterSetName = @('Default','Versions')
+                    },
+                    @{
+                        Name = 'Source'
+                        OriginalName = '--source='
+                        ParameterType = 'string'
+                        Description = 'Package Source'
+                        NoGap = $true
+                        ValueFromPipelineByPropertyName = $true
+                        ParameterSetName = @('Default','Versions')
+                    },
+                    @{
+                        Name = 'Versions'
+                        OriginalName = '--versions'
+                        ParameterType = 'switch'
+                        Description = 'Show available versions of the package'
+                        ParameterSetName = 'Versions'
+                    }
+                )
+                OutputHandlers = @(
+                    @{
+                        ParameterSetName = 'Default'
+                        Handler = {
+                            param ( $output )
+
+                            $packageInfo = @{}
+
+                            $output | Select-String -AllMatches -Pattern '^\s*([\w\s]+):\s(.+)$' | ForEach-Object -MemberName Matches | ForEach-Object{
+                                $match = ($_.Groups | Select-Object -Skip 1).Value
+                                $packageInfo.add($match[0],$match[1])
+                            }
+
+                            $packageInfo
+                        }
+                    },
+                    @{
+                        ParameterSetName = 'Versions'
+                        Handler = $RenderedPackageInfoVersionOutputHandler
+                    }
+                )
             }
         )
     }

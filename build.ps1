@@ -10,12 +10,14 @@ $commands | ForEach-Object {
 	$NounParameters = $_.Parameters ?? @()
 	# Output handlers work differently - they will supercede each other, instead of being merged.
 	$NounOutputHandlers = $_.OutputHandlers
+	$NounDefaultParameterSetName = $_.DefaultParameterSetName
 	$_.Verbs | ForEach-Object {
 		# Same logic as nouns - prepare verb-level original command elements and parameters for merging, but not output handlers
 		$VerbOriginalCommandElements = $_.OriginalCommandElements ?? @()
 		$VerbParameters = $_.Parameters ?? @()
 		$VerbOutputHandlers = $_.OutputHandlers
 		$Description = $_.Description
+		$VerbDefaultParameterSetName = $_.DefaultParameterSetName
 		$tempJson = New-TemporaryFile
 		New-CrescendoCommand -Verb $_.Verb -Noun $Noun | ForEach-Object {
 			$_.OriginalName = $BaseOriginalName
@@ -24,10 +26,13 @@ $commands | ForEach-Object {
 			$_.Description = $Description
 			# Merge parameters in order of noun-level, then verb-level, then generic
 			$_.Parameters = ($NounParameters + $VerbParameters + $BaseParameters)
+			# Prefer verb-level default parameter set name first, then noun-level, then generic
+			$_.DefaultParameterSetName = ($VerbDefaultParameterSetName ?? $NounDefaultParameterSetName) ?? $BaseDefaultParameterSetName
 			# Prefer verb-level handlers first, then noun-level, then generic
 			$_.OutputHandlers = ($VerbOutputHandlers ?? $NounOutputHandlers) ?? $BaseOutputHandlers
 			$_
-		} | ConvertTo-Json | Out-File $tempJson
+		} | ConvertTo-Json -Depth 100 | Out-File $tempJson
+		# The -Depth parameter is required for complex objects with more than 2 layers of nesting
 		$tempJsonArray += $tempJson
 	}
 }

@@ -19,6 +19,20 @@ Find-WinGetPackage -ID openJS.nodejs
 Find-WinGetPackage -ID Mozilla.Firefox -Exact
 ```
 
+### Get a package's detailed information from the repository
+```PowerShell
+Get-WinGetPackageInfo -ID CPUID.CPU-Z -Version 1.95
+
+Find-WinGetPackage -ID Mozilla.Firefox -Exact | Get-WinGetPackageInfo
+```
+
+### Get all available versions of a package
+```PowerShell
+Get-WinGetPackageInfo -ID CPUID.CPU-Z -Versions
+
+Find-WinGetPackage -ID Mozilla.Firefox -Exact | Get-WinGetPackageInfo -Versions
+```
+
 ### Install a package
 ```PowerShell
 Find-WinGetPackage OpenJS.NodeJS -Exact | Install-WinGetPackage
