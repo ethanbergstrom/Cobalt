@@ -1,6 +1,6 @@
 ﻿Import-Module Cobalt
 
-Describe "basic package search operations" {
+Describe 'basic package search operations' {
 	Context 'without additional arguments' {
 		BeforeAll {
 			$package = 'Microsoft.PowerShell'
@@ -15,7 +15,7 @@ Describe "basic package search operations" {
 	}
 }
 
-Describe "DSC-compliant package installation and uninstallation" {
+Describe 'DSC-compliant package installation and uninstallation' {
 	Context 'without additional arguments' {
 		BeforeAll {
 			$package = 'CPUID.CPU-Z'
@@ -36,7 +36,7 @@ Describe "DSC-compliant package installation and uninstallation" {
 	}
 }
 
-Describe "pipline-based package installation and uninstallation" {
+Describe 'pipline-based package installation and uninstallation' {
 	Context 'without additional arguments' {
 		BeforeAll {
 			$package = 'CPUID.CPU-Z'
@@ -51,7 +51,7 @@ Describe "pipline-based package installation and uninstallation" {
 	}
 }
 
-Describe "package upgrade" {
+Describe 'package upgrade' {
 	Context 'a single package' {
 		BeforeAll {
 			$package = 'CPUID.CPU-Z'
@@ -69,45 +69,9 @@ Describe "package upgrade" {
 			Update-WinGetPackage -ID $package -Exact | Where-Object {$_.ID -eq $package} | Where-Object {[version]$_.version -gt [version]$version} | Should -BeNullOrEmpty
 		}
 	}
-	# Unable to test the -All switch at this time on GitHub Action runners - in part because of how long it takes, and in part because of incompatibility between the layered software
-	# GitHub installs on their runners and WinGet not handling upgrade scenarios gracefully.
-	#
-	# Context 'multiple packages' {
-	# 	BeforeAll {
-	# 		$packages = @(
-	# 			@{
-	# 				id = 'CPUID.CPU-Z'
-	# 				version = '1.95'
-	# 			},
-	# 			@{
-	# 				id = 'putty.putty'
-	# 				version = '0.74'
-	# 			}
-	# 		)
-	# 		$packages | ForEach-Object {Install-WinGetPackage -ID $_.id -Version $_.version -Exact}
-	# 	}
-	# 	AfterAll {
-	# 		$packages | ForEach-Object {Uninstall-WinGetPackage -ID $_.id}
-	# 	}
-
-	# 	It 'upgrades all packages without erroring' {
-	# 		Update-WinGetPackage -All | Should -Not -BeNullOrEmpty
-	# 	}
-
-	# 	It 'successfully upgraded packages to a newer version' {
-	# 		$packages | ForEach-Object {
-	# 			$package = $_
-	# 			Get-WinGetPackage -ID $package.id | Where-Object {[version]$_.version -gt [version]$package.version} | Should -Not -BeNullOrEmpty
-	# 		}
-	# 	}
-
-	# 	It 'upgrades all packages again, and returns no output, because everything is up to date' {
-	# 		Update-WinGetPackage -All | Should -BeNullOrEmpty
-	# 	}
-	# }
 }
 
-Describe "WinGet error handling" {
+Describe 'WinGet error handling' {
 	Context 'no results returned' {
 		BeforeAll {
 			$package = 'Cisco.*'
@@ -118,6 +82,22 @@ Describe "WinGet error handling" {
 		}
 		It 'searches for an ID that will never exist' {
 			{Get-WinGetPackage -ID $package} | Should -Not -Throw
+		}
+	}
+}
+
+Describe 'package metadata retrieval' {
+	Context 'package details' {
+		BeforeAll {
+			$package = 'Mozilla.Firefox'
+			$version = '98.0'
+		}
+
+		It 'returns package metadata' {
+			Get-WinGetPackageInfo -ID $package -Version $version -Exact | Where-Object {$_.Version -eq $version} | Should -Not -BeNullOrEmpty
+		}
+		It 'returns package versions' {
+			(Get-WinGetPackageInfo -ID $package -Versions -Exact).Contains($version) | Should -Be $true
 		}
 	}
 }
