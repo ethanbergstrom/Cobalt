@@ -322,7 +322,7 @@ $Commands = @(
                 )
                 OutputHandlers = @{
                     ParameterSetName = 'Default'
-                    Handler = $InstallPackageOutputHandler
+                    Handler = $RenderedInstallPackageOutputHandler
                 }
             },
             @{
