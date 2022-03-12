@@ -49,8 +49,9 @@ jobs:
         shell: pwsh
         run: .\Install-WinGet.ps1
       - name: Test with Pester
-        shell: pwsh
         run: |
+          # Required for Crescendo-generated modules to interpret
+          [Console]::InputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8;
           Invoke-Pester -Configuration (New-PesterConfiguration -Hashtable @{
             Run = @{
               Exit = $true

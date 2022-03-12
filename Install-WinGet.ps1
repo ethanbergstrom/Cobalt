@@ -13,6 +13,8 @@ $msStoreDownloadAPIURL = 'https://store.rg-adguard.net/api/GetFiles'
 $msWinGetStoreURL = 'https://www.microsoft.com/en-us/p/app-installer/9nblggh4nns1'
 $msVCLibPattern = "*Microsoft.VCLibs*UWPDesktop*$architecture*appx*"
 $msVCLibDownloadPath = '.\Microsoft.VCLibs.UWPDesktop.appx'
+$msUIXamlPattern = "*Microsoft.UI.Xaml*$architecture*appx*"
+$msUIXamlDownloadPath = '.\Microsoft.UI.Xaml.appx'
 $msWinGetExe = 'winget'
 $wingetExecAliasPath = "C:\Windows\System32\$msWinGetExe.exe"
 
@@ -40,8 +42,15 @@ $msWinGetLatestRelease.links |
             Select-Object -First 1 -ExpandProperty href |
                 ForEach-Object {Invoke-WebRequest -Uri $_ -OutFile $msVCLibDownloadPath}
 
+# Download the Windows UI redistrubable from the Microsoft Store
+(Invoke-WebRequest -Uri $msStoreDownloadAPIURL -Method Post -Form @{type='url'; url=$msWinGetStoreURL; ring='Retail'; lang='en-US'}).links |
+Where-Object OuterHTML -Like $msUIXamlPattern |
+    Sort-Object outerHTML -Descending |
+        Select-Object -First 1 -ExpandProperty href |
+            ForEach-Object {Invoke-WebRequest -Uri $_ -OutFile $msUIXamlDownloadPath}
+
 # Install the WinGet and it's VC++ .msix with the downloaded license file
-Add-AppProvisionedPackage -Online -PackagePath $msWinGetMSIXBundlePath -DependencyPackagePath $msVCLibDownloadPath -LicensePath $msWinGetLicensePath
+Add-AppProvisionedPackage -Online -PackagePath $msWinGetMSIXBundlePath -DependencyPackagePath ($msVCLibDownloadPath,$msUIXamlDownloadPath) -LicensePath $msWinGetLicensePath
 
 # Force the creation of the execution alias with NtObjectManager, since one isn't generated automatically in the current user session
 $appxPackage = Get-AppxPackage Microsoft.DesktopAppInstaller
