@@ -101,10 +101,10 @@ $InstallPackageOutputHandler = {
         } else {
             $output | ForEach-Object {
                 if ($_ -match 'Found .+ \[(?<id>[\S]+)\] Version (?<version>[\S]+)' -and $Matches.id -and $Matches.version) {
-                        [pscustomobject]@{
-                            ID = $Matches.id
-                            Version = $Matches.version
-                        }
+                    [pscustomobject]@{
+                        ID = $Matches.id
+                        Version = $Matches.version
+                    }
                 }
             }
         }
@@ -113,11 +113,9 @@ $InstallPackageOutputHandler = {
 
 $UnInstallPackageOutputHandler = {
     if ($output) {
-        if ($output -match $languageData.InstallerFailedWithCode) {
+        if ($output -match $languageData.UninstallFailedWithCode) {
             # Only show output that matches or comes after the 'failed' keyword
-            Write-Error ($output[$output.IndexOf($($output -match $languageData.InstallerFailedWithCode | Select-Object -First 1))..($output.Length-1)] -join "`r`n")
-        } else {
-            $output
+            Write-Error ($output[$output.IndexOf($($output -match $languageData.UninstallFailedWithCode | Select-Object -First 1))..($output.Length-1)] -join "`r`n")
         }
     }
 }
