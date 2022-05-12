@@ -66,39 +66,45 @@ $GetPackageOutputHandler = {
                 }
             )
 
-            # The -replace cleans up errant characters that come from WinGet's poor treatment of truncated columnar output
-            ($output | Select-String -Pattern 'upgrades available.','--include-unknown' -NotMatch) -replace '[^i\p{IsBasicLatin}]',' ' | Select-Object -Skip ($headerLine+2) | ForEach-Object {
-                Remove-Variable -Name 'package' -ErrorAction SilentlyContinue
+            # Only attempt to parse output if it contains a 'version' column
+            if ($versionIndex -ne -1) {
+                # The -replace cleans up errant characters that come from WinGet's poor treatment of truncated columnar output
+                ($output | Select-String -Pattern 'upgrades available.','--include-unknown' -NotMatch) -replace '[^i\p{IsBasicLatin}]',' ' | Select-Object -Skip ($headerLine+2) | ForEach-Object {
+                    Remove-Variable -Name 'package' -ErrorAction SilentlyContinue
 
-                $package = [ordered]@{
-                    ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
-                }
-
-                if ($package) {
-                    # I'm so sorry, blame WinGet
-                    # If neither the 'Available' or 'Source' column exist, gather version data to the end of the string
-                    $package.Version = $(
-                        if ($versionEndIndex -ne -1) {
-                            $_.SubString($versionIndex,$versionEndIndex-$versionIndex)
-                        } else {
-                            $_.SubString($versionIndex)
-                        }
-                    ).Trim() -replace '[^\.\d]'
-
-                    $package.Available = $(
-                        if ($sourceIndex -ne -1) {
-                            $_.SubString($availableIndex,$sourceIndex-$availableIndex)
-                        } else {
-                            $_.SubString($availableIndex)
-                        }
-                    ).Trim() -replace '[^\.\d]'
-
-                    # If the 'Source' column was included in the output, include it in our output, too
-                    if (($sourceIndex -ne -1) -And ($_.Length -ge $sourceIndex)) {
-                        $package.Source = $_.SubString($sourceIndex).Trim() -split ' ' | Select-Object -Last 1
+                    $package = [ordered]@{
+                        ID = $_.SubString($idIndex,$versionIndex-$idIndex).Trim()
                     }
 
-                    [pscustomobject]$package
+                    if ($package) {
+                        # I'm so sorry, blame WinGet
+                        # If neither the 'Available' or 'Source' column exist, gather version data to the end of the string
+                        $package.Version = $(
+                            if ($versionEndIndex -ne -1) {
+                                $_.SubString($versionIndex,$versionEndIndex-$versionIndex)
+                            } else {
+                                $_.SubString($versionIndex)
+                            }
+                        ).Trim() -replace '[^\.\d]'
+
+                        # Only attempt to add 'Available Version' data if the column exists
+                        if ($availableIndex -ne -1) {
+                            $package.Available = $(
+                                if ($sourceIndex -ne -1) {
+                                    $_.SubString($availableIndex,$sourceIndex-$availableIndex)
+                                } else {
+                                    $_.SubString($availableIndex)
+                                }
+                            ).Trim() -replace '[^\.\d]'
+                        }
+
+                        # If the 'Source' column was included in the output, include it in our output, too
+                        if (($sourceIndex -ne -1) -And ($_.Length -ge $sourceIndex)) {
+                            $package.Source = $_.SubString($sourceIndex).Trim() -split ' ' | Select-Object -Last 1
+                        }
+
+                        [pscustomobject]$package
+                    }
                 }
             }
         }
