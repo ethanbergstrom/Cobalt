@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2022-05-12
 ### Added
 - Ability to return a list of packages that qualify for updates
-## Changed
+### Changed
 - `Get-WinGetPackage` now returns both installed and available version information
 
 ## [0.2.1] - 2022-03-12
