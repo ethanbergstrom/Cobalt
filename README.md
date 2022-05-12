@@ -69,6 +69,11 @@ Install-WinGetPackage CPUID.CPU-Z -Version 1.95
 Get-WinGetPackage nodejs
 ```
 
+### Get list of installed packages that can be upgraded
+```PowerShell
+Get-WinGetPackageUpdate
+```
+
 ### Upgrade a package
 ```PowerShell
 Update-WinGetPackage CPUID.CPU-Z
