@@ -62,6 +62,9 @@ Describe 'package upgrade' {
 			Uninstall-WinGetPackage -ID $package
 		}
 
+		It 'recognizes a package upgrade is available' {
+			Get-WinGetPackageUpdate | Where-Object {$_.ID -eq $package} | Where-Object {[version]$_.available -gt [version]$version} | Should -Not -BeNullOrEmpty
+		}
 		It 'upgrades a specific package to the latest version' {
 			Update-WinGetPackage -ID $package -Exact | Where-Object {$_.ID -eq $package} | Where-Object {[version]$_.version -gt [version]$version} | Should -Not -BeNullOrEmpty
 		}

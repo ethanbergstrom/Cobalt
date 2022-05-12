@@ -69,6 +69,11 @@ Install-WinGetPackage CPUID.CPU-Z -Version 1.95
 Get-WinGetPackage nodejs
 ```
 
+### Get list of installed packages that can be upgraded
+```PowerShell
+Get-WinGetPackageUpdate
+```
+
 ### Upgrade a package
 ```PowerShell
 Update-WinGetPackage CPUID.CPU-Z
@@ -104,6 +109,15 @@ Cobalt integrates with WinGet.exe to manage and store source information
 ## Known Issues
 ### Stability
 WinGet's behavior and APIs are still very unstable. Do not be surprised if this module stops working with newer versions of WinGet.
+
+### Retrieving package upgrade list hangs on first use
+Due to [a bug](https://github.com/microsoft/winget-cli/issues/1869) that [is resolved](https://github.com/microsoft/winget-cli/pull/1874) in WinGet v1.3 preview releases, if `Get-WinGetPackageUpdate` is ran with WinGet v1.2.x or below without having first accepted source license agreements, the cmdlet will hang indefinitely due to source agreements not having been accepted.
+
+Available workarounds include:
+* Running another cmdlet that invokes correctly-behaving WinGet behavior (ex: `Get-WinGetPackage`)
+* Manually accepting the source agreement via the WinGet CLI
+
+After WinGet v1.3 is generally available with the bug fixed, a new version of this module will be released to resolve this issue.
 
 ## Legal and Licensing
 Cobalt is licensed under the [MIT license](./LICENSE.txt).
