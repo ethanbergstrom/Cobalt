@@ -439,7 +439,11 @@ $Commands = @(
             @{
                 Verb = 'Get'
                 Description = 'Get a list of installed WinGet packages'
-                OriginalCommandElements = @('upgrade','--accept-source-agreements')
+                # Add this back in after WinGet 1.3 is released
+                # https://github.com/microsoft/winget-cli/issues/1869
+                # https://github.com/microsoft/winget-cli/pull/1874
+                # OriginalCommandElements = @('upgrade','--accept-source-agreements')
+                OriginalCommandElements = @('upgrade')
             }
         )
     }
