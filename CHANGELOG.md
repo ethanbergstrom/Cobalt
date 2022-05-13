@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2022-05-13
+### Fixed
+- Package upgrade list functionality now correctly supports non-EN-US localities
+
 ## [0.3.0] - 2022-05-12
 ### Added
 - Ability to return a list of packages that qualify for updates
