@@ -48,7 +48,6 @@ jobs:
       - name: Install WinGet
         shell: pwsh
         run: .\Install-WinGet.ps1
-        run: winget list
       - name: Test with Pester
         run: |
           Invoke-Pester -Configuration (New-PesterConfiguration -Hashtable @{
