@@ -63,7 +63,7 @@ Describe 'package version handling' {
 		}
 
 		It 'recognizes a package upgrade is available' {
-			Get-WinGetPackageUpdate $package | Where-Object {([version]$_.Version).Major -eq $majorVersion} | Should -Not -BeNullOrEmpty
+			Get-WinGetPackageUpdate -ID $package | Where-Object {([version]$_.Version).Major -eq $majorVersion} | Should -Not -BeNullOrEmpty
 		}
 	}
 }
