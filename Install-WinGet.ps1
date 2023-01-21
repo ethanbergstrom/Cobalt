@@ -3,7 +3,7 @@ Import-Module appx -UseWindowsPowerShell -WarningAction SilentlyContinue
 
 # GitHub release information
 $appxPackageName = 'Microsoft.DesktopAppInstaller'
-$msWinGetLatestReleaseURL = 'https://github.com/microsoft/winget-cli/releases/latest'
+$msWinGetLatestReleaseURL = 'https://github.com/microsoft/winget-cli/releases/expanded_assets/v1.3.2691'
 $msWinGetMSIXBundlePath = ".\$appxPackageName.msixbundle"
 $msWinGetLicensePath = ".\$appxPackageName.license.xml"
 

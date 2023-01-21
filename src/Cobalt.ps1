@@ -70,7 +70,7 @@ $GetPackageOutputHandler = {
             # Only attempt to parse output if it contains a 'version' column
             if ($versionIndex -ne -1) {
                 # The -replace cleans up errant characters that come from WinGet's poor treatment of truncated columnar output
-                ($output | Select-String -Pattern $languageData.AvailableUpgrades,'--include-unknown' -NotMatch) -replace '[^i\p{IsBasicLatin}]',' ' | Select-Object -Skip ($headerLine+2) | ForEach-Object {
+                ($output | Select-String -Pattern $languageData.AvailableUpgrades,'--include-unknown' -NotMatch) -replace '[^i\p{IsBasicLatin}]+',' ' | Select-Object -Skip ($headerLine+2) | ForEach-Object {
                     Remove-Variable -Name 'package' -ErrorAction SilentlyContinue
 
                     $package = [ordered]@{
