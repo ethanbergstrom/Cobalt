@@ -15,9 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup PowerShell module cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cacher
         with:
           path: "~/.local/share/powershell/Modules"
@@ -30,7 +30,7 @@ jobs:
         shell: pwsh
         run: ./build.ps1
       - name: Bundle up module
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: module
           path: ./src/
@@ -39,9 +39,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Download module
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: module
           path: C:\Users\runneradmin\Documents\PowerShell\Modules\Cobalt\
@@ -56,44 +56,23 @@ jobs:
             Run = @{
               Exit = $true
             }
-            TestResult = @{
-              Enabled = $true
-              OutputFormat = 'JUnitXML'
+            Output = @{
+              Verbosity = 'Detailed'
             }
           })
-      - name: Upload Pester test results
-        if: always()
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-results
-          path: testResults.xml
       - name: Upload WinGet logs
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: WinGet-logs
           path: C:\Users\runneradmin\AppData\Local\Packages\Microsoft.DesktopAppInstaller*\LocalState\DiagOutputDir\
-  Results:
-    needs: Test
-    if: success() || failure()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Test Results
-        uses: actions/download-artifact@v2
-        with:
-          name: test-results
-          path: test-results
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          files: test-results/**/*.xml
   Publish:
     needs: Test
     if: github.event_name == 'release' && github.event.action == 'published'
     runs-on: ubuntu-latest
     steps:
       - name: Download module
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: module
           path: '~/.local/share/powershell/Modules/Cobalt'
