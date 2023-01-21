@@ -48,11 +48,6 @@ jobs:
       - name: Install WinGet
         shell: pwsh
         run: .\Install-WinGet.ps1
-      - name: Get a list of installed versions returned by Cobalt
-        shell: pwsh
-        run: Get-WinGetPackage
-      - name: Get a list of installed versions returned by WinGet
-        shell: pwsh
         run: winget list
       - name: Test with Pester
         run: |
