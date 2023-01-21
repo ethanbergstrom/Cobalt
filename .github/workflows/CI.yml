@@ -56,8 +56,6 @@ jobs:
         run: winget list
       - name: Test with Pester
         run: |
-          # Required for Crescendo-generated modules to interpret 
-          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8;
           Invoke-Pester -Configuration (New-PesterConfiguration -Hashtable @{
             Run = @{
               Exit = $true
