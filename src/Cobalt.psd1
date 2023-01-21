@@ -1,6 +1,6 @@
 @{
 	RootModule = 'Cobalt.psm1'
-	ModuleVersion = '0.3.1'
+	ModuleVersion = '0.3.2'
 	GUID = '9f295092-e7fd-4c52-b41e-3c5b0612fa52'
 	Author = 'Ethan Bergstrom'
 	Copyright = '2021'
