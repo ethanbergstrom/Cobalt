@@ -51,7 +51,7 @@ jobs:
       - name: Test with Pester
         run: |
           # Codepage 437 being the default input and output OEM code page for US-English systems
-          # Maybe one day we can all use UT8-8 by default and be done with this nonsense: https://stackoverflow.com/questions/57131654/using-utf-8-encoding-chcp-65001-in-command-prompt-windows-powershell-window/57134096#57134096
+          # Maybe one day we can all use UTF-8 by default and be done with this nonsense: https://stackoverflow.com/questions/57131654/using-utf-8-encoding-chcp-65001-in-command-prompt-windows-powershell-window/57134096#57134096
           # Required for simulated the encoding used by interactive terminals
           [Console]::InputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding(437)
           Invoke-Pester -Configuration (New-PesterConfiguration -Hashtable @{
