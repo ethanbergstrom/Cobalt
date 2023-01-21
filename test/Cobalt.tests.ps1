@@ -52,7 +52,7 @@ Describe 'pipline-based package installation and uninstallation' {
 }
 
 Describe 'package version handling' {
-	Context 'a long package name' {
+	Context 'a package with a long name' {
 		BeforeAll {
 			# Winget columnar output introduces strange characters in termainal output when package name exceeds 41 characters.
 			# The full name of this package in Winget is 'Microsoft Visual C++ 2013 Redistributable (x64)', which is 47 characters and is already installed on GitHub Action's runners by default
@@ -62,8 +62,8 @@ Describe 'package version handling' {
 			$majorVersion = 12
 		}
 
-		It 'recognizes a package upgrade is available' {
-			Get-WinGetPackageUpdate -ID $package | Where-Object {([version]$_.Version).Major -eq $majorVersion} | Should -Not -BeNullOrEmpty
+		It 'properly parses version information returned by Winget' {
+			Get-WinGetPackage -ID $package | Where-Object {([version]$_.Version).Major -eq $majorVersion} | Should -Not -BeNullOrEmpty
 		}
 	}
 }
