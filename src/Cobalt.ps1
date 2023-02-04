@@ -21,7 +21,7 @@ $i18nHandlerHelper = {
 
         $(try {
             # We have to trim the leading BOM for .NET's XML parser to correctly read Microsoft's own files - go figure
-            ([xml](((Invoke-WebRequest -Uri "https://raw.githubusercontent.com/microsoft/winget-cli/master/Localization/Resources/$language/winget.resw" -ErrorAction Stop ).Content -replace "\uFEFF", ""))).root.data
+            ([xml](((Invoke-WebRequest -Uri "https://raw.githubusercontent.com/microsoft/winget-cli/v1.3.2691/Localization/Resources/$language/winget.resw" -ErrorAction Stop ).Content -replace "\uFEFF", ""))).root.data
         } catch {
             # Fall back to English if a locale file doesn't exist
             (
