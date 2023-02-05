@@ -28,6 +28,9 @@ $msWinGetLatestRelease.links |
             Expression = {$msWinGetLatestRelease.BaseResponse.headers.Server.Product.Name+$_.href}
         } | ForEach-Object {Invoke-WebRequest -Uri $_.URI -OutFile $msWinGetMSIXBundlePath}
 
+# Hopefully this mitigates the sporadic authentication denied errors from GitHub's CDN
+Start-Sleep -Seconds 10
+
 $msWinGetLatestRelease.links |
     Where-Object href -Like '*License*xml' |
         Select-Object -Property @{
