@@ -21,7 +21,7 @@ jobs:
         id: cacher
         with:
           path: "~/.local/share/powershell/Modules"
-          key: crescendo-0.4.1-cache
+          key: crescendo-1.1-preview-cache
       - name: Install Crescendo
         if: steps.cacher.outputs.cache-hit != 'true'
         shell: pwsh
