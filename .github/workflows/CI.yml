@@ -25,7 +25,7 @@ jobs:
       - name: Install Crescendo
         if: steps.cacher.outputs.cache-hit != 'true'
         shell: pwsh
-        run: Install-Module Microsoft.PowerShell.Crescendo -RequiredVersion 0.4.1 -Force
+        run: Install-Module Microsoft.PowerShell.Crescendo -AllowPrerelease -RequiredVersion 1.1.0-Preview01 -Force
       - name: Build the module with Crescendo
         shell: pwsh
         run: ./build.ps1

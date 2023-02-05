@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2023-02-05
+### Changed
+- Upgraded to PowerShell Crescendo 1.1 Preview 1 for compiling the module. No functional changes expected.
+
 ## [0.3.3] - 2023-01-29
 ### Fixed
 - Hard-code the version of WinGet non-EN-US localization resources to work around microsoft/winget-cli#2783
